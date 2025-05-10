@@ -8,7 +8,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 app = Flask(__name__)
 
-# 環境変数から読み込み
+# 環境変数からAPIキーを読み込み
 openai.api_key = os.getenv("OPENAI_API_KEY")
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
@@ -16,9 +16,8 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 @app.route("/webhook", methods=["GET", "POST"])
 def callback():
     if request.method == "GET":
-        return "OK", 200  # Webhook検証用
+        return "OK", 200
 
-    # 以下POSTリクエスト処理
     signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
 
@@ -41,7 +40,7 @@ def handle_message(event):
         ]
     )
 
-    reply_text = response.choices[0].message["content"].strip()
+    reply_text = response.choices[0].message.content.strip()
 
     line_bot_api.reply_message(
         event.reply_token,
