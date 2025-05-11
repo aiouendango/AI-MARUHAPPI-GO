@@ -7,12 +7,12 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
-# 環境変数からAPIキー取得
+# 環境変数から各キーを取得
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Webhookエンドポイント（LINE Developersに登録するやつ）
+# LINE Webhook エンドポイント
 @app.route("/webhook", methods=["POST"])
 def callback():
     signature = request.headers["X-Line-Signature"]
@@ -25,12 +25,25 @@ def callback():
 
     return "OK", 200
 
-# メッセージ受信時の処理（GPT-4oで応答）
+# LINEメッセージ受信時の処理（GPT-4o応答）
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_text = event.message.text
 
-    # ChatGPT 4oに送って返答を受け取る
     response = client.chat.completions.create(
-        model="gpt-4o",  # 最新モデル GPT-4o！
-        messages=[{"role": "user",]()
+        model="gpt-4o",  # 最新モデル GPT-4o を使用
+        messages=[
+            {"role": "user", "content": user_text}
+        ]
+    )
+
+    reply_text = response.choices[0].message.content
+
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=reply_text)
+    )
+
+# ローカル実行用（Renderでは不要）
+if __name__ == "__main__":
+    app.run()
